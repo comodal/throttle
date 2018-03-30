@@ -20,7 +20,8 @@ cache:
     - $HOME/.gradle/wrapper/
 
 stages:
-  - build
+  - name: build
+    if: tag NOT present
   - name: publish
     if: tag IS present
 
@@ -39,4 +40,5 @@ jobs:
       - wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh
       - . ./install-jdk.sh -F 10 -L GPL
       script:
+      - ./gradlew :throttle:check
       - ./gradlew :throttle:bintrayUpload
