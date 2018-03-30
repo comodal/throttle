@@ -21,7 +21,7 @@ cache:
 
 stages:
   - name: build
-    if: tag NOT present
+    if: tag IS NOT present
   - name: publish
     if: tag IS present
 
