@@ -1,0 +1,163 @@
+ext {
+  desc = 'Java Concurrent Rate Limiter'
+  bintrayOrg = 'comodal'
+  bintrayRepo = 'libraries'
+  vcsUrl = 'https://github.com/comodal/' + project.name
+  moduleName = 'systems.comodal.throttle'
+}
+
+apply plugin: 'java-library'
+apply plugin: 'pl.allegro.tech.build.axion-release'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'jacoco'
+
+scmVersion {
+  tag {
+    prefix = project.name
+  }
+  repository {
+    if (project.hasProperty("AXION_RELEASE_GITHUB_TOKEN")) {
+      customUsername = AXION_RELEASE_GITHUB_TOKEN
+    }
+    pushTagsOnly = true
+  }
+}
+
+project.group = 'engineering.clientside'
+project.version = scmVersion.version
+sourceCompatibility = JavaVersion.VERSION_1_10
+
+repositories {
+  jcenter()
+}
+
+dependencies {
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:+'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params:+'
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:+'
+}
+
+compileJava {
+  inputs.property("moduleName", moduleName)
+  doFirst {
+    options.compilerArgs = [
+        '--module-path', classpath.asPath,
+    ]
+    classpath = files()
+  }
+}
+
+compileTestJava {
+  inputs.property("moduleName", moduleName)
+  doFirst {
+    options.compilerArgs = [
+        '--module-path', classpath.asPath,
+        '--add-modules', 'org.junit.jupiter.api',
+        '--add-reads', "$moduleName=org.junit.jupiter.api",
+        '--patch-module', "$moduleName=" + files(sourceSets.test.java.srcDirs).asPath,
+    ]
+    classpath = files()
+  }
+}
+
+test {
+  useJUnitPlatform()
+
+  inputs.property("moduleName", moduleName)
+  doFirst {
+    jvmArgs = [
+        '--module-path', classpath.asPath,
+        '--add-modules', 'ALL-MODULE-PATH',
+        '--add-reads', "$moduleName=org.junit.jupiter.api",
+        '--patch-module', "$moduleName=" + files(sourceSets.test.java.outputDir).asPath,
+        '--add-opens', "$moduleName/systems.comodal.throttle=org.junit.platform.commons"
+    ]
+    classpath = files()
+  }
+}
+
+jacoco {
+  toolVersion = "+"
+}
+
+jacocoTestReport {
+  reports {
+    xml.enabled = true
+    html.enabled = true
+  }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+  classifier = 'javadoc'
+  from javadoc.destinationDir
+}
+
+artifacts {
+  archives sourcesJar
+}
+
+def pomConfig = {
+  licenses {
+    license {
+      name = "Apache License 2.0"
+      url project.vcsUrl + '/blob/master/LICENSE'
+      distribution "repo"
+    }
+  }
+  scm {
+    url project.vcsUrl
+  }
+}
+
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      from components.java
+      artifact sourcesJar
+      // artifact javadocJar
+      groupId project.group
+      artifactId project.name
+      version = project.version
+      pom.withXml {
+        def root = asNode()
+        root.appendNode('description', "$desc")
+        root.appendNode('name', project.name)
+        root.appendNode('url', project.vcsUrl)
+        root.children().last() + pomConfig
+      }
+    }
+  }
+}
+
+bintray {
+  user = project.hasProperty("bintrayUser") ? bintrayUser : System.getenv('BINTRAY_USER')
+  key = project.hasProperty("bintrayApiKey") ? bintrayApiKey : System.getenv('BINTRAY_API_KEY')
+  publications = ['mavenJava']
+  pkg {
+    userOrg = project.bintrayOrg
+    repo = project.bintrayRepo
+    name = project.name
+    desc = project.desc
+    vcsUrl = project.vcsUrl
+    websiteUrl = project.vcsUrl
+    issueTrackerUrl = project.vcsUrl + '/issues'
+    licenses = ["Apache-2.0"]
+    publish = true
+    version {
+      name = project.version
+      vcsTag = project.name + '-' + project.version
+      gpg {
+        sign = true
+        passphrase = project.hasProperty("bintrayGPGPassphrase") ? bintrayGPGPassphrase : System.getenv('BINTRAY_GPG_PASSPHRASE')
+      }
+    }
+  }
+}
+
+bintrayUpload.onlyIf { !project.version.endsWith('SNAPSHOT') }

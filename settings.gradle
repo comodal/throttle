@@ -1,0 +1,4 @@
+rootProject.name = 'throttle'
+
+include 'systems.comodal.throttle'
+project(':systems.comodal.throttle').name = 'throttle'
