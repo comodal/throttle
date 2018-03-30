@@ -24,7 +24,7 @@ scmVersion {
   }
 }
 
-project.group = 'engineering.clientside'
+project.group = 'systems.comodal'
 project.version = scmVersion.version
 sourceCompatibility = JavaVersion.VERSION_1_10
 
