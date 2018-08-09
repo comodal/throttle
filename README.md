@@ -1,4 +1,4 @@
-# Throttle [![Build Status](https://travis-ci.org/client-side/throttle.svg)](https://travis-ci.org/comodal/throttle) [ ![Download](https://api.bintray.com/packages/comodal/libraries/throttle/images/download.svg) ](https://bintray.com/comodal/libraries/throttle/_latestVersion) [![License](http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat) ](LICENSE) [![codecov](https://codecov.io/gh/comodal/throttle/branch/master/graph/badge.svg)](https://codecov.io/gh/comodal/throttle)
+# Throttle [![Build Status](https://travis-ci.org/comodal/throttle.svg)](https://travis-ci.org/comodal/throttle) [ ![Download](https://api.bintray.com/packages/comodal/libraries/throttle/images/download.svg) ](https://bintray.com/comodal/libraries/throttle/_latestVersion) [![License](http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat) ](LICENSE)
 
 >Provides a mechanism to limit the rate of access to a resource.
 

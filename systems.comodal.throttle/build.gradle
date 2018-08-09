@@ -10,7 +10,6 @@ apply plugin: 'java-library'
 apply plugin: 'pl.allegro.tech.build.axion-release'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
-apply plugin: 'jacoco'
 
 scmVersion {
   tag {
@@ -26,7 +25,7 @@ scmVersion {
 
 project.group = 'systems.comodal'
 project.version = scmVersion.version
-sourceCompatibility = JavaVersion.VERSION_1_10
+sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {
   jcenter()
@@ -77,87 +76,79 @@ test {
   }
 }
 
-jacoco {
-  toolVersion = "+"
-}
 
-jacocoTestReport {
-  reports {
-    xml.enabled = true
-    html.enabled = true
+afterEvaluate {
+  task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
   }
-}
 
-task sourcesJar(type: Jar, dependsOn: classes) {
-  classifier = 'sources'
-  from sourceSets.main.allSource
-}
+  task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+  }
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-  classifier = 'javadoc'
-  from javadoc.destinationDir
-}
+  artifacts {
+    archives sourcesJar
+  }
 
-artifacts {
-  archives sourcesJar
-}
-
-def pomConfig = {
-  licenses {
-    license {
-      name "Apache License 2.0"
-      url project.vcsUrl + '/blob/master/LICENSE'
-      distribution "repo"
+  def pomConfig = {
+    licenses {
+      license {
+        name "Apache License 2.0"
+        url project.vcsUrl + '/blob/master/LICENSE'
+        distribution "repo"
+      }
+    }
+    scm {
+      url project.vcsUrl
     }
   }
-  scm {
-    url project.vcsUrl
-  }
-}
 
-publishing {
-  publications {
-    mavenJava(MavenPublication) {
-      from components.java
-      artifact sourcesJar
-      // artifact javadocJar
-      groupId project.group
-      artifactId project.name
-      version = project.version
-      pom.withXml {
-        def root = asNode()
-        root.appendNode('description', "$desc")
-        root.appendNode('name', project.name)
-        root.appendNode('url', project.vcsUrl)
-        root.children().last() + pomConfig
+  publishing {
+    publications {
+      mavenJava(MavenPublication) {
+        from components.java
+        artifact sourcesJar
+        // artifact javadocJar
+        groupId project.group
+        artifactId project.name
+        version = project.version
+        pom.withXml {
+          def root = asNode()
+          root.appendNode('description', "$desc")
+          root.appendNode('name', project.name)
+          root.appendNode('url', project.vcsUrl)
+          root.children().last() + pomConfig
+        }
       }
     }
   }
-}
 
-bintray {
-  user = project.hasProperty("bintrayUser") ? bintrayUser : System.getenv('BINTRAY_USER')
-  key = project.hasProperty("bintrayApiKey") ? bintrayApiKey : System.getenv('BINTRAY_API_KEY')
-  publications = ['mavenJava']
-  pkg {
-    userOrg = project.bintrayOrg
-    repo = project.bintrayRepo
-    name = project.name
-    desc = project.desc
-    vcsUrl = project.vcsUrl
-    websiteUrl = project.vcsUrl
-    issueTrackerUrl = project.vcsUrl + '/issues'
-    licenses = ["Apache-2.0"]
-    publish = true
-    version {
-      name = project.version
-      vcsTag = project.name + '-' + project.version
-      gpg {
-        sign = true
-        passphrase = project.hasProperty("bintrayGPGPassphrase") ? bintrayGPGPassphrase : System.getenv('BINTRAY_GPG_PASSPHRASE')
+  bintray {
+    user = project.hasProperty("bintrayUser") ? bintrayUser : System.getenv('BINTRAY_USER')
+    key = project.hasProperty("bintrayApiKey") ? bintrayApiKey : System.getenv('BINTRAY_API_KEY')
+    publications = ['mavenJava']
+    pkg {
+      userOrg = project.bintrayOrg
+      repo = project.bintrayRepo
+      name = project.name
+      desc = project.desc
+      vcsUrl = project.vcsUrl
+      websiteUrl = project.vcsUrl
+      issueTrackerUrl = project.vcsUrl + '/issues'
+      licenses = ["Apache-2.0"]
+      publish = true
+      version {
+        name = project.version
+        vcsTag = project.name + '-' + project.version
+        gpg {
+          sign = true
+          passphrase = project.hasProperty("bintrayGPGPassphrase") ? bintrayGPGPassphrase : System.getenv('BINTRAY_GPG_PASSPHRASE')
+        }
       }
     }
   }
-}
 
-bintrayUpload.onlyIf { !project.version.endsWith('SNAPSHOT') }
+  bintrayUpload.onlyIf { !project.version.endsWith('SNAPSHOT') }
+}

@@ -1,9 +1,13 @@
-sudo: required
 dist: trusty
-group: edge
+sudo: false
 
 language: java
-# jdk: oraclejdk10
+jdk: openjdk11
+
+before_install:
+# https://github.com/travis-ci/travis-ci/issues/8408
+# Also interferes with platform-tooling-support-tests expectations
+- unset _JAVA_OPTIONS
 
 notifications:
   email:
@@ -11,34 +15,28 @@ notifications:
     on_failure: always
 
 before_cache:
-  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
-  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+- rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 
 cache:
   directories:
-    - $HOME/.gradle/caches/
-    - $HOME/.gradle/wrapper/
+  - $HOME/.gradle/caches/
+  - $HOME/.gradle/wrapper/
 
 stages:
-  - name: build
-    if: tag IS blank
-  - name: publish
-    if: tag IS present
+- name: build
+  if: tag IS blank
+- name: publish
+  if: tag IS present
 
 jobs:
   include:
-    - stage: build
-      install:
-      - wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh
-      - . ./install-jdk.sh -F 10 -L GPL
-      script:
-      - ./gradlew :throttle:check
-      - ./gradlew :throttle:jacocoTestReport
-      - bash <(curl -s https://codecov.io/bash)
-    - stage: publish
-      install:
-      - wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh
-      - . ./install-jdk.sh -F 10 -L GPL
-      script:
-      - ./gradlew :throttle:check
-      - ./gradlew :throttle:bintrayUpload
+  - stage: build
+    name: "Build, Test and Code Coverage"
+    script:
+    - ./gradlew check
+  - stage: publish
+    name: "Publish to Bintray"
+    script:
+    - ./gradlew check
+    - ./gradlew :throttle:bintrayUpload
