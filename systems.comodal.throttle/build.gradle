@@ -13,8 +13,7 @@ apply plugin: 'com.jfrog.bintray'
 
 scmVersion {
   tag {
-    prefix = project.name
-    serialize = {config, version -> version}
+    prefix = ''
   }
   repository {
     if (project.hasProperty("AXION_RELEASE_GITHUB_TOKEN")) {
