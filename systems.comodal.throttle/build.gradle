@@ -7,6 +7,7 @@ ext {
 }
 
 apply plugin: 'java-library'
+apply plugin: "org.javamodularity.moduleplugin"
 apply plugin: 'pl.allegro.tech.build.axion-release'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
@@ -16,9 +17,6 @@ scmVersion {
     prefix = ''
   }
   repository {
-    if (project.hasProperty("AXION_RELEASE_GITHUB_TOKEN")) {
-      customUsername = AXION_RELEASE_GITHUB_TOKEN
-    }
     pushTagsOnly = true
   }
 }
@@ -37,43 +35,8 @@ dependencies {
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:+'
 }
 
-compileJava {
-  inputs.property("moduleName", moduleName)
-  doFirst {
-    options.compilerArgs = [
-        '--module-path', classpath.asPath,
-    ]
-    classpath = files()
-  }
-}
-
-compileTestJava {
-  inputs.property("moduleName", moduleName)
-  doFirst {
-    options.compilerArgs = [
-        '--module-path', classpath.asPath,
-        '--add-modules', 'org.junit.jupiter.api',
-        '--add-reads', "$moduleName=org.junit.jupiter.api",
-        '--patch-module', "$moduleName=" + files(sourceSets.test.java.srcDirs).asPath,
-    ]
-    classpath = files()
-  }
-}
-
 test {
   useJUnitPlatform()
-
-  inputs.property("moduleName", moduleName)
-  doFirst {
-    jvmArgs = [
-        '--module-path', classpath.asPath,
-        '--add-modules', 'ALL-MODULE-PATH',
-        '--add-reads', "$moduleName=org.junit.jupiter.api",
-        '--patch-module', "$moduleName=" + files(sourceSets.test.java.outputDir).asPath,
-        '--add-opens', "$moduleName/systems.comodal.throttle=org.junit.platform.commons"
-    ]
-    classpath = files()
-  }
 }
 
 
