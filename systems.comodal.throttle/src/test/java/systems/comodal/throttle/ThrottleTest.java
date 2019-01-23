@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
+import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
 import static java.util.concurrent.TimeUnit.*;
@@ -41,7 +41,7 @@ import static systems.comodal.throttle.NanoThrottle.ONE_SECOND_NANOS;
 final class ThrottleTest {
 
   private static final double FIRST_DELTA = 0.005; // 5ms
-  private static final double SECOND_DELTA = 0.006; // 6ms
+  private static final double SECOND_DELTA = 0.008; // 6ms
 
   @BeforeAll
   static void warmup() {
@@ -71,17 +71,6 @@ final class ThrottleTest {
     NANOSECONDS.sleep(waitDuration);
     return waitDuration / ONE_SECOND_NANOS;
   }
-
-//  @Test
-//  void testBurstAcquire() throws InterruptedException {
-//    final var throttle = Throttle.create(5.0, 1.0, true);
-//    final var delay1 = acquireAndSleep(throttle);
-//    final var delay2 = acquireAndSleep(throttle, 10);
-//    final var delay3 = throttle.acquireDelayDuration() / ONE_SECOND_NANOS;
-//    assertEquals(0.0, delay1);
-//    assertEquals(0.20, delay2, FIRST_DELTA);
-//    assertEquals(0.20, delay3, SECOND_DELTA);
-//  }
 
   @Test
   void testAcquire() throws InterruptedException {
@@ -310,22 +299,22 @@ final class ThrottleTest {
     // warm-up
     IntStream.range(0, 32).parallel().forEach(index -> throttle.acquireUnchecked());
 
-    var stream = IntStream.range(0, qps + 1).parallel();
+    var stream = IntStream.range(0, qps).parallel();
+    IntConsumer acquireFunction = index -> throttle.acquireUnchecked();
     long start = System.nanoTime();
-    stream.forEach(index -> throttle.acquireUnchecked());
-    long duration = TimeUnit.MILLISECONDS
-        .convert(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+    stream.forEach(acquireFunction);
+    long duration = MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS);
     assertTrue(duration >= 1000 && duration < 1050, "Expected duration between 1,000 and 1,050ms. Observed " + duration);
 
     final var fairThrottle = Throttle.create(qps, true);
     // warm-up
     IntStream.range(0, 32).parallel().forEach(index -> fairThrottle.acquireUnchecked());
 
-    stream = IntStream.range(0, qps + 1).parallel();
+    stream = IntStream.range(0, qps).parallel();
+    acquireFunction = index -> fairThrottle.tryAcquireUnchecked(200_000_000, NANOSECONDS);
     start = System.nanoTime();
-    stream.forEach(index -> fairThrottle.tryAcquireUnchecked(200_000_000, TimeUnit.NANOSECONDS));
-    duration = TimeUnit.MILLISECONDS
-        .convert(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+    stream.forEach(acquireFunction);
+    duration = MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS);
     assertTrue(duration >= 1000 && duration < 1050, "Expected duration between 1,000 and 1,050ms. Observed " + duration);
   }
 }

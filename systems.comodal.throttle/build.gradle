@@ -1,3 +1,9 @@
+apply plugin: 'java-library'
+apply plugin: 'org.javamodularity.moduleplugin'
+apply plugin: 'pl.allegro.tech.build.axion-release'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+
 ext {
   desc = 'Java Concurrent Rate Limiter'
   bintrayOrg = 'comodal'
@@ -5,12 +11,6 @@ ext {
   vcsUrl = 'https://github.com/comodal/' + project.name
   moduleName = 'systems.comodal.throttle'
 }
-
-apply plugin: 'java-library'
-apply plugin: "org.javamodularity.moduleplugin"
-apply plugin: 'pl.allegro.tech.build.axion-release'
-apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.bintray'
 
 scmVersion {
   tag {
