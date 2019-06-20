@@ -13,12 +13,8 @@ ext {
 }
 
 scmVersion {
-  tag {
-    prefix = ''
-  }
-  repository {
-    pushTagsOnly = true
-  }
+  tag.prefix = ''
+  repository.pushTagsOnly = true
 }
 
 project.group = 'systems.comodal'
@@ -36,19 +32,27 @@ dependencies {
 }
 
 test {
+  moduleOptions {
+    runOnClasspath = true
+  }
   useJUnitPlatform()
+  maxParallelForks = 4
+  testLogging {
+    events "passed", "skipped", "failed", "standardOut", "standardError"
+    exceptionFormat "full"
+    showStandardStreams true
+  }
 }
-
 
 afterEvaluate {
 
   task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
+    archiveClassifier.set('sources')
+    from sourceSets.main.allJava
   }
 
   task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier.set('javadoc')
     from javadoc.destinationDir
   }
 
